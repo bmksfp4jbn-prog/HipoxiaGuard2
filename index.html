@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Hypoxia Guard – 저산소증 자가점검 및 대응 가이드</title>
+
+<!-- ===== PWA 설정: 홈 화면에 추가 시 앱처럼 실행되도록 하는 메타/링크 태그 ===== -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1662FF" />
+<meta name="description" content="고산 환경이나 고강도 운동 상황에서의 저산소증 관련 증상 자가점검 및 대응 가이드 (교육용 프로토타입)" />
+
+<!-- iOS(Safari) 홈 화면 추가 대응 -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Hypoxia Guard" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+<!-- Android/Chrome 홈 화면 아이콘 -->
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+<style>
+  :root{
+    --color-bg:#F4F8FF;
+    --color-surface:#FFFFFF;
+    --color-primary:#1662FF;
+    --color-primary-dark:#0B3FA0;
+    --color-primary-soft:#E6EEFF;
+    --color-text:#152238;
+    --color-muted:#6C7A93;
+    --color-line:#DCE6F7;
+    --color-observe:#12946B;
+    --color-observe-soft:#E3F7F0;
+    --color-caution:#B96A00;
+    --color-caution-soft:#FFF2DF;
+    --color-danger:#D6273F;
+    --color-danger-dark:#9E1B2D;
+    --color-danger-soft:#FDE6E9;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
+    --shadow-card:0 4px 18px rgba(22,98,255,0.08);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    background:var(--color-bg);
+    color:var(--color-text);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+  }
+
+  /* 스마트폰 세로 화면 기준 반응형 컨테이너 */
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    background:var(--color-bg);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  header.topbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:16px 20px 12px;
+    background:var(--color-surface);
+    border-bottom:1px solid var(--color-line);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .brand-mark{
+    width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:18px;height:18px;}
+  .brand-text{font-size:15px;font-weight:700;color:var(--color-primary-dark);letter-spacing:-0.2px;}
+  .brand-sub{font-size:11px;color:var(--color-muted);margin-top:1px;}
+
+  main{
+    flex:1;
+    padding:20px 20px 28px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .screen{display:none;flex-direction:column;gap:16px;animation:fadeIn .25s ease;}
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .card{
+    background:var(--color-surface);
+    border:1px solid var(--color-line);
+    border-radius:var(--radius-lg);
+    padding:18px;
+    box-shadow:var(--shadow-card);
+  }
+
+  h1{font-size:21px;margin:0 0 8px;color:var(--color-primary-dark);letter-spacing:-0.3px;}
+  h2{font-size:17px;margin:0 0 6px;color:var(--color-text);}
+  p{margin:0;color:var(--color-muted);font-size:14px;}
+
+  .lead-box{
+    background:var(--color-primary-soft);
+    border-radius:var(--radius-lg);
+    padding:22px 18px;
+    text-align:left;
+  }
+  .lead-box p{color:var(--color-primary-dark);font-size:15.5px;line-height:1.6;font-weight:500;}
+
+  .btn{
+    border:none;
+    border-radius:var(--radius-md);
+    padding:15px 18px;
+    font-size:15.5px;
+    font-weight:700;
+    cursor:pointer;
+    width:100%;
+    transition:transform .08s ease, filter .15s ease;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--color-primary);color:#fff;}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-secondary{background:var(--color-primary-soft);color:var(--color-primary-dark);}
+  .btn-outline{background:#fff;color:var(--color-primary);border:1.5px solid var(--color-primary);}
+  .btn-danger{background:var(--color-danger);color:#fff;}
+  .btn-ghost{background:transparent;color:var(--color-muted);font-weight:600;font-size:13.5px;padding:10px;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* 증상 문항 */
+  .symptom-item{border-bottom:1px solid var(--color-line);padding-bottom:14px;margin-bottom:2px;}
+  .symptom-item:last-child{border-bottom:none;}
+  .symptom-q{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;gap:8px;}
+  .symptom-q .num{color:var(--color-primary);font-weight:700;font-size:12.5px;margin-right:6px;}
+  .symptom-q .label{font-size:14.5px;font-weight:600;color:var(--color-text);}
+  .scale{display:flex;gap:6px;}
+  .scale button{
+    flex:1;
+    border:1.5px solid var(--color-line);
+    background:#fff;
+    border-radius:var(--radius-sm);
+    padding:9px 4px;
+    font-size:12.5px;
+    color:var(--color-muted);
+    cursor:pointer;
+    font-weight:600;
+  }
+  .scale button.selected{
+    background:var(--color-primary);
+    border-color:var(--color-primary);
+    color:#fff;
+  }
+  .subcheck{
+    margin-top:9px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--color-danger-soft);
+    padding:8px 10px;
+    border-radius:var(--radius-sm);
+  }
+  .subcheck input{width:16px;height:16px;accent-color:var(--color-danger);}
+  .subcheck label{font-size:12.5px;color:var(--color-danger-dark);font-weight:600;}
+
+  .field-group{display:flex;flex-direction:column;gap:8px;}
+  .field-label{font-size:13.5px;font-weight:700;color:var(--color-text);}
+  select, input[type=number]{
+    width:100%;
+    padding:12px 12px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid var(--color-line);
+    font-size:14.5px;
+    background:#fff;
+    color:var(--color-text);
+    font-family:inherit;
+  }
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{
+    border:1.5px solid var(--color-line);
+    background:#fff;
+    padding:9px 13px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--color-muted);
+    cursor:pointer;
+  }
+  .chip.selected{background:var(--color-primary);border-color:var(--color-primary);color:#fff;}
+
+  /* 결과 배지 */
+  .result-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:8px 16px;border-radius:999px;font-weight:800;font-size:14px;
+    margin-bottom:4px;
+  }
+  .badge-observe{background:var(--color-observe-soft);color:var(--color-observe);}
+  .badge-caution{background:var(--color-caution-soft);color:var(--color-caution);}
+  .badge-danger{background:var(--color-danger-soft);color:var(--color-danger);}
+
+  .step-card{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--color-surface);
+    border:1px solid var(--color-line);
+    border-radius:var(--radius-md);
+    padding:13px 14px;
+  }
+  .step-num{
+    width:26px;height:26px;border-radius:50%;
+    background:var(--color-primary-soft);color:var(--color-primary-dark);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:13px;flex-shrink:0;
+  }
+  .step-card p{color:var(--color-text);font-size:14px;}
+
+  .note-box{
+    background:var(--color-caution-soft);
+    border-radius:var(--radius-md);
+    padding:12px 14px;
+    font-size:13px;
+    color:var(--color-caution);
+    font-weight:600;
+    line-height:1.5;
+  }
+
+  /* 위험 화면 */
+  #screen-danger{background:var(--color-danger);margin:-20px -20px 0;padding:28px 22px;border-radius:0 0 24px 24px;color:#fff;flex:1;}
+  #screen-danger .danger-icon{
+    width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.18);
+    display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+  }
+  #screen-danger h1{color:#fff;font-size:19px;}
+  #screen-danger .big-msg{
+    font-size:20px;font-weight:800;line-height:1.5;margin:6px 0 18px;color:#fff;
+  }
+  #screen-danger .step-card{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);}
+  #screen-danger .step-card p{color:#fff;}
+  #screen-danger .step-num{background:rgba(255,255,255,0.25);color:#fff;}
+  #screen-danger .flags-box{background:rgba(255,255,255,0.14);border-radius:var(--radius-md);padding:12px 14px;font-size:13px;}
+  #screen-danger .btn-outline{background:transparent;border:1.5px solid #fff;color:#fff;}
+
+  /* 호흡 가이드 */
+  .breath-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding:12px 0 4px;}
+  .breath-circle-holder{
+    width:220px;height:220px;display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .breath-circle{
+    width:90px;height:90px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #6FA0FF, var(--color-primary));
+    box-shadow:0 0 0 10px var(--color-primary-soft);
+    transition:width 4s ease-in-out, height 4s ease-in-out;
+  }
+  .breath-circle.expand{width:200px;height:200px;transition:width 4s ease-in-out, height 4s ease-in-out;}
+  .breath-circle.contract{width:90px;height:90px;transition:width 6s ease-in-out, height 6s ease-in-out;}
+  .breath-instruction{font-size:17px;font-weight:800;color:var(--color-primary-dark);text-align:center;min-height:24px;}
+  .breath-count{font-size:13px;color:var(--color-muted);font-weight:600;}
+
+  /* 타이머 */
+  .timer-display{
+    font-size:42px;font-weight:800;color:var(--color-primary-dark);text-align:center;
+    letter-spacing:1px;
+  }
+
+  /* 재평가 질문 */
+  .yn-row{display:flex;gap:10px;}
+  .yn-row button{flex:1;}
+
+  footer.disclaimer{
+    padding:12px 18px 18px;
+    font-size:10.5px;
+    color:var(--color-muted);
+    text-align:center;
+    line-height:1.5;
+    border-top:1px solid var(--color-line);
+    background:var(--color-surface);
+  }
+
+  .compare-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .compare-table th,.compare-table td{padding:9px 6px;border-bottom:1px solid var(--color-line);text-align:left;}
+  .compare-table th{color:var(--color-muted);font-weight:700;font-size:12px;}
+  .tag-good{color:var(--color-observe);font-weight:700;}
+  .tag-bad{color:var(--color-danger);font-weight:700;}
+  .tag-neutral{color:var(--color-muted);font-weight:700;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0c0-5-7-13-7-13z" fill="#fff"/></svg>
+    </div>
+    <div>
+      <div class="brand-text">Hypoxia Guard</div>
+      <div class="brand-sub">저산소증 자가점검 및 대응 가이드</div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===================== 화면 1: 인트로 ===================== -->
+    <section class="screen active" id="screen-intro">
+      <div class="lead-box">
+        <p>고산 환경이나 격렬한 운동 후 두통, 어지럼증, 숨 가쁨이 있나요?<br/>현재 증상을 확인하고 필요한 행동을 알아보세요.</p>
+      </div>
+      <div class="card">
+        <h2>이 앱에 대하여</h2>
+        <p>이 앱은 의료 진단 도구가 아니며, 고산 환경·고강도 운동 상황에서 나타날 수 있는 저산소증 관련 증상을 스스로 점검하고 초기 대응 행동을 학습하기 위한 <b>교육용 프로토타입</b>입니다.</p>
+      </div>
+      <button class="btn btn-primary" onclick="goTo('screen-check')">자가점검 시작하기</button>
+      <button class="btn btn-secondary" id="btn-install" style="display:none;" onclick="installApp()">홈 화면에 앱으로 추가하기</button>
+    </section>
+
+    <!-- ===================== 화면 2: 자가점검 ===================== -->
+    <section class="screen" id="screen-check">
+      <div class="card">
+        <h2>증상 자가점검</h2>
+        <p>각 증상의 정도를 0(없음)~3(심함) 중에서 선택해주세요.</p>
+      </div>
+
+      <div class="card" id="symptom-list"></div>
+
+      <div class="card field-group">
+        <h2>추가 정보</h2>
+
+        <div class="field-group">
+          <div class="field-label">현재 고도</div>
+          <div class="chip-row" data-group="altitude">
+            <div class="chip" data-value="sea">해수면 또는 모름</div>
+            <div class="chip" data-value="mid">1,500~2,500m</div>
+            <div class="chip" data-value="high">2,500m 이상</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">현재 상황</div>
+          <div class="chip-row" data-group="activity">
+            <div class="chip" data-value="rest">휴식 중</div>
+            <div class="chip" data-value="light">가벼운 운동 후</div>
+            <div class="chip" data-value="intense">고강도 운동 후</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">산소포화도 (SpO₂, %) — 직접 입력 또는 비워두면 모름 처리</div>
+          <input type="number" id="input-spo2" min="50" max="100" placeholder="예: 92" />
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">현재 심박수 (회/분) — 직접 입력 또는 비워두면 모름 처리</div>
+          <input type="number" id="input-hr" min="30" max="220" placeholder="예: 88" />
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="submitCheck()">결과 확인하기</button>
+      <button class="btn btn-ghost" onclick="goTo('screen-intro')">처음으로</button>
+    </section>
+
+    <!-- ===================== 화면 3: 결과 (관찰/주의) ===================== -->
+    <section class="screen" id="screen-result">
+      <div class="card">
+        <span class="result-badge" id="result-badge"></span>
+        <h1 id="result-title"></h1>
+        <p id="result-sub"></p>
+      </div>
+
+      <div class="card" id="spo2-note-box" style="display:none;">
+        <p class="note-box" id="spo2-note-text"></p>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <h2>지금 해야 할 행동</h2>
+        <div id="result-steps" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-secondary" onclick="goTo('screen-breathing')">호흡 가이드 시작</button>
+        <button class="btn btn-outline" id="btn-water" onclick="toggleWater()">물 마시기 완료</button>
+        <button class="btn btn-primary" onclick="startRest()">휴식 시작 (10분 타이머)</button>
+      </div>
+    </section>
+
+    <!-- ===================== 화면 4: 위험 경고 ===================== -->
+    <section id="screen-danger">
+      <div class="danger-icon">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none"><path d="M12 2L1 21h22L12 2z" fill="#fff"/><rect x="11" y="9" width="2" height="6" fill="#D6273F"/><rect x="11" y="16" width="2" height="2" fill="#D6273F"/></svg>
+      </div>
+      <h1>위험 단계</h1>
+      <div class="big-msg">즉시 활동을 중단하고 주변 사람 또는 의료진에게 도움을 요청하세요. 혼자 이동하지 마세요.</div>
+
+      <div class="flags-box" id="danger-flags-box" style="margin-bottom:14px;"></div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;" id="danger-steps"></div>
+
+      <button class="btn btn-outline" onclick="goTo('screen-intro'); resetAll();">처음 화면으로 돌아가기</button>
+    </section>
+
+    <!-- ===================== 화면 5: 호흡 가이드 ===================== -->
+    <section class="screen" id="screen-breathing">
+      <div class="card">
+        <h2>호흡 가이드</h2>
+        <p class="note-box">이 호흡 가이드는 불안과 빠른 호흡을 줄이기 위한 보조 기능이며, 저산소증 자체를 치료하지 않습니다. 어지럼증이나 흉통이 심해지면 즉시 중단하세요.</p>
+      </div>
+
+      <div class="card breath-wrap">
+        <div class="breath-circle-holder">
+          <div class="breath-circle" id="breath-circle"></div>
+        </div>
+        <div class="breath-instruction" id="breath-instruction">시작 버튼을 눌러주세요</div>
+        <div class="breath-count" id="breath-count">0 / 5회</div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-breath-start" onclick="startBreathing()">호흡 가이드 시작</button>
+      <button class="btn btn-ghost" onclick="stopBreathing(); goTo('screen-result');">중단하고 결과로 돌아가기</button>
+    </section>
+
+    <!-- ===================== 화면 6: 휴식 타이머 ===================== -->
+    <section class="screen" id="screen-rest">
+      <div class="card" style="align-items:center;text-align:center;">
+        <h2>휴식 중입니다</h2>
+        <p>앉거나 누워서 편안하게 휴식하며 규칙적으로 호흡하세요.</p>
+      </div>
+      <div class="card">
+        <div class="timer-display" id="timer-display">10:00</div>
+      </div>
+      <button class="btn btn-ghost" onclick="skipTimer()">(테스트용) 타이머 건너뛰고 재평가하기</button>
+    </section>
+
+    <!-- ===================== 화면 7: 재평가 ===================== -->
+    <section class="screen" id="screen-reassess">
+      <div class="card">
+        <h2>재평가</h2>
+        <p>휴식 후 상태를 다시 확인해주세요.</p>
+      </div>
+      <div class="card" id="reassess-list"></div>
+      <button class="btn btn-primary" onclick="submitReassess()">재평가 결과 확인</button>
+    </section>
+
+    <!-- ===================== 화면 8: 최종 비교 ===================== -->
+    <section class="screen" id="screen-final">
+      <div class="card">
+        <span class="result-badge" id="final-badge"></span>
+        <h1 id="final-title"></h1>
+        <p id="final-sub"></p>
+      </div>
+      <div class="card">
+        <h2>처음 평가 vs 재평가 비교</h2>
+        <table class="compare-table">
+          <thead><tr><th>항목</th><th>처음 평가</th><th>재평가</th></tr></thead>
+          <tbody id="compare-body"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline" onclick="resetAll(); goTo('screen-intro');">처음 화면으로 돌아가기</button>
+    </section>
+
+  </main>
+
+  <footer class="disclaimer">
+    본 앱은 의학 교육을 위한 프로토타입이며 의료인의 진단을 대신하지 않습니다.<br/>
+    심한 호흡곤란, 흉통, 의식 변화 또는 보행 장애가 있으면 즉시 응급 도움을 요청하세요.
+  </footer>
+</div>
+
+<script>
+/* =========================================================
+   전역 상태(state) 정의
+   - symptoms: 10개 증상의 0~3점 점수
+   - hasFrothySputum: 거품 섞인 가래 유무(별도 체크박스, item10 하위 항목)
+   - altitude/activity: 현재 상황 정보 (참고용, 판정 점수에는 직접 반영하지 않음)
+   - spo2/hr: 선택 입력값
+   - initial: 최초 판정 결과 저장
+   - reassess: 재평가 답변 저장
+   - waterDone: 물 마시기 완료 여부
+========================================================= */
+const SYMPTOM_DEFS = [
+  { key:'headache',  label:'두통' },
+  { key:'dizziness', label:'어지럼증' },
+  { key:'nausea',    label:'메스꺼움 또는 구토' },
+  { key:'fatigue',   label:'평소보다 심한 피로' },
+  { key:'dyspnea',   label:'숨이 차거나 호흡하기 어려움' },
+  { key:'chestPain', label:'가슴 답답함 또는 흉통' },
+  { key:'restDyspnea', label:'안정 중에도 숨이 참' },
+  { key:'imbalance', label:'걷다가 비틀거리거나 균형 잡기가 어려움' },
+  { key:'confusion', label:'집중하기 어렵거나 혼란스러움' },
+  { key:'cough',     label:'기침 또는 거품 섞인 가래' },
+];
+
+let state = {
+  symptoms:{},
+  hasFrothySputum:false,
+  altitude:'', activity:'',
+  spo2:null, hr:null,
+  waterDone:false,
+  initial:null,   // {stage, total, flags, spo2Warning}
+  reassess:null,  // {headacheImproved, dizzyImproved, breathImproved, newChestOrRestDyspnea, newConfusionOrImbalance}
+};
+
+SYMPTOM_DEFS.forEach(s => state.symptoms[s.key] = 0);
+
+/* ---------- 화면 전환 ---------- */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* =========================================================
+   화면 2 렌더링: 증상 체크리스트 UI 생성
+========================================================= */
+function renderSymptomList(){
+  const wrap = document.getElementById('symptom-list');
+  wrap.innerHTML = '';
+  SYMPTOM_DEFS.forEach((s, idx) => {
+    const item = document.createElement('div');
+    item.className = 'symptom-item';
+    item.innerHTML = `
+      <div class="symptom-q">
+        <div><span class="num">${idx+1}</span><span class="label">${s.label}</span></div>
+      </div>
+      <div class="scale" data-key="${s.key}">
+        ${[0,1,2,3].map(v => `<button type="button" data-val="${v}" onclick="setSymptomScore('${s.key}', ${v}, this)">${v}</button>`).join('')}
+      </div>
+      ${ s.key === 'cough' ? `
+        <div class="subcheck">
+          <input type="checkbox" id="chk-frothy" onchange="state.hasFrothySputum=this.checked">
+          <label for="chk-frothy">거품이 섞인 가래가 있다 (해당 시 체크)</label>
+        </div>` : '' }
+    `;
+    wrap.appendChild(item);
+  });
+
+  // 0점을 기본 선택 상태로 표시
+  document.querySelectorAll('.scale').forEach(sc => {
+    const btn = sc.querySelector('button[data-val="0"]');
+    if(btn) btn.classList.add('selected');
+  });
+
+  // 고도/상황 chip 선택 이벤트
+  document.querySelectorAll('.chip-row').forEach(row=>{
+    row.querySelectorAll('.chip').forEach(chip=>{
+      chip.addEventListener('click', ()=>{
+        row.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state[row.dataset.group] = chip.dataset.value;
+      });
+    });
+  });
+}
+
+function setSymptomScore(key, val, btnEl){
+  state.symptoms[key] = val;
+  const scaleEl = btnEl.parentElement;
+  scaleEl.querySelectorAll('button').forEach(b=>b.classList.remove('selected'));
+  btnEl.classList.add('selected');
+}
+
+renderSymptomList();
+
+/* =========================================================
+   핵심 판정 함수: calculateStage()
+   - 총점(0~30)과 위험 신호(red flag)를 기반으로
+     '관찰' / '주의' / '위험' 3단계를 판정한다.
+   - 아래 5가지 중 하나라도 해당하면 총점과 무관하게 '위험'으로 판정:
+     1) 안정 중 심한 호흡곤란   : restDyspnea >= 2
+     2) 흉통                   : chestPain >= 1 (경미해도 위험 신호로 간주)
+     3) 걷기 어려운 균형 장애   : imbalance >= 2
+     4) 혼란 또는 의식 변화     : confusion >= 2
+     5) 거품 섞인 가래         : hasFrothySputum === true
+========================================================= */
+function calculateStage(symptoms, hasFrothySputum, spo2){
+  const total = Object.values(symptoms).reduce((a,b)=>a+b, 0);
+
+  const flags = [];
+  if(symptoms.restDyspnea >= 2) flags.push('안정 중 심한 호흡곤란');
+  if(symptoms.chestPain >= 1) flags.push('흉통');
+  if(symptoms.imbalance >= 2) flags.push('걷기 어려울 정도의 균형 장애');
+  if(symptoms.confusion >= 2) flags.push('혼란 또는 의식 변화');
+  if(hasFrothySputum) flags.push('거품 섞인 가래');
+
+  let stage;
+  if(flags.length > 0 || total >= 15){
+    stage = '위험';
+  } else if(total >= 6){
+    stage = '주의';
+  } else {
+    stage = '관찰';
+  }
+
+  // SpO2 90% 미만이면 최소 '주의' 단계로 상향(단, 위험 신호가 없을 때만 적용)
+  let spo2Warning = false;
+  if(spo2 !== null && !isNaN(spo2) && spo2 < 90){
+    spo2Warning = true;
+    if(stage === '관찰') stage = '주의';
+  }
+
+  return { stage, total, flags, spo2Warning };
+}
+
+/* =========================================================
+   화면 2 → 결과 제출 처리
+========================================================= */
+function submitCheck(){
+  const spo2Val = document.getElementById('input-spo2').value;
+  const hrVal = document.getElementById('input-hr').value;
+  state.spo2 = spo2Val === '' ? null : Number(spo2Val);
+  state.hr = hrVal === '' ? null : Number(hrVal);
+
+  const result = calculateStage(state.symptoms, state.hasFrothySputum, state.spo2);
+  state.initial = result;
+
+  renderResultScreen(result, 'screen-result');
+
+  if(result.stage === '위험'){
+    renderDangerScreen(result);
+    goTo('screen-danger');
+  } else {
+    goTo('screen-result');
+  }
+}
+
+/* =========================================================
+   결과 화면(관찰/주의) 렌더링
+========================================================= */
+const STAGE_BADGE_CLASS = { '관찰':'badge-observe', '주의':'badge-caution', '위험':'badge-danger' };
+const STAGE_TITLE = { '관찰':'관찰 단계', '주의':'주의 단계' };
+const STAGE_SUB = {
+  '관찰':'현재 증상은 비교적 경미합니다. 아래 행동을 따르고 상태를 계속 지켜보세요.',
+  '주의':'증상이 뚜렷하게 나타나고 있습니다. 즉시 운동을 중단하고 아래 행동을 따르세요.',
+};
+const STAGE_STEPS = {
+  '관찰': [
+    '활동을 멈추고 앉아서 휴식하기',
+    '천천히 규칙적으로 호흡하기',
+    '물을 조금씩 마시기',
+    '10분 후 증상 다시 확인하기',
+  ],
+  '주의': [
+    '즉시 운동 중단',
+    '혼자 있지 말고 주변 사람에게 알리기',
+    '더 높은 곳으로 이동하지 않기',
+    '휴식 후 다시 검사하기',
+    '증상이 지속되거나 심해지면 의료진에게 도움 요청하기',
+  ],
+};
+const DANGER_STEPS = [
+  '즉시 활동 중단',
+  '주변 사람 또는 의료진에게 도움 요청',
+  '혼자 이동하지 않기',
+  '고산 환경이라면 더 높은 곳으로 올라가지 않기',
+  '의식 저하나 심한 호흡곤란이 있으면 응급상황으로 판단하기',
+];
+
+function renderResultScreen(result){
+  document.getElementById('result-badge').className = 'result-badge ' + STAGE_BADGE_CLASS[result.stage];
+  document.getElementById('result-badge').textContent = result.stage;
+  document.getElementById('result-title').textContent = STAGE_TITLE[result.stage];
+  document.getElementById('result-sub').textContent = STAGE_SUB[result.stage];
+
+  const stepsWrap = document.getElementById('result-steps');
+  stepsWrap.innerHTML = '';
+  STAGE_STEPS[result.stage].forEach((txt, i)=>{
+    stepsWrap.innerHTML += `<div class="step-card"><div class="step-num">${i+1}</div><p>${txt}</p></div>`;
+  });
+
+  const spo2Box = document.getElementById('spo2-note-box');
+  if(result.spo2Warning){
+    spo2Box.style.display = 'block';
+    document.getElementById('spo2-note-text').textContent =
+      '측정된 산소포화도(SpO₂)가 90% 미만입니다. 다만 고도, 측정 기기 오차 등에 따라 수치만으로 질환 여부를 진단할 수 없으니 증상 변화를 함께 관찰해주세요.';
+  } else {
+    spo2Box.style.display = 'none';
+  }
+
+  // 물 마시기 버튼 상태 초기화
+  state.waterDone = false;
+  updateWaterBtn();
+}
+
+function renderDangerScreen(result){
+  const flagsBox = document.getElementById('danger-flags-box');
+  if(result.flags.length > 0){
+    flagsBox.innerHTML = '<b>감지된 위험 신호:</b> ' + result.flags.join(', ');
+  } else {
+    flagsBox.innerHTML = '<b>증상 총점이 높아 위험 단계로 판정되었습니다.</b>';
+  }
+  const stepsWrap = document.getElementById('danger-steps');
+  stepsWrap.innerHTML = '';
+  DANGER_STEPS.forEach((txt,i)=>{
+    stepsWrap.innerHTML += `<div class="step-card"><div class="step-num">${i+1}</div><p>${txt}</p></div>`;
+  });
+}
+
+/* 물 마시기 완료 토글 */
+function toggleWater(){
+  state.waterDone = !state.waterDone;
+  updateWaterBtn();
+}
+function updateWaterBtn(){
+  const btn = document.getElementById('btn-water');
+  if(state.waterDone){
+    btn.textContent = '✓ 물 마시기 완료됨';
+    btn.classList.remove('btn-outline');
+    btn.classList.add('btn-secondary');
+  } else {
+    btn.textContent = '물 마시기 완료';
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-outline');
+  }
+}
+
+/* =========================================================
+   호흡 가이드: 4초 확장(들이마시기) / 6초 수축(내쉬기) 를 5회 반복
+========================================================= */
+let breathTimer = null;
+let breathCycle = 0;
+const BREATH_TOTAL_CYCLES = 5;
+
+function startBreathing(){
+  stopBreathing();
+  breathCycle = 0;
+  document.getElementById('btn-breath-start').disabled = true;
+  runBreathCycle();
+}
+
+function runBreathCycle(){
+  if(breathCycle >= BREATH_TOTAL_CYCLES){
+    document.getElementById('breath-instruction').textContent = '호흡 가이드를 완료했습니다';
+    document.getElementById('btn-breath-start').disabled = false;
+    return;
+  }
+  const circle = document.getElementById('breath-circle');
+  const instruction = document.getElementById('breath-instruction');
+
+  // 들이마시기 (4초, 원 확대)
+  circle.classList.remove('contract');
+  circle.classList.add('expand');
+  instruction.textContent = '천천히 들이마시기';
+
+  breathTimer = setTimeout(()=>{
+    // 내쉬기 (6초, 원 축소)
+    circle.classList.remove('expand');
+    circle.classList.add('contract');
+    instruction.textContent = '천천히 내쉬기';
+
+    breathTimer = setTimeout(()=>{
+      breathCycle++;
+      document.getElementById('breath-count').textContent = `${breathCycle} / ${BREATH_TOTAL_CYCLES}회`;
+      runBreathCycle();
+    }, 6000);
+  }, 4000);
+}
+
+function stopBreathing(){
+  if(breathTimer) clearTimeout(breathTimer);
+  breathTimer = null;
+  document.getElementById('btn-breath-start').disabled = false;
+  document.getElementById('breath-instruction').textContent = '시작 버튼을 눌러주세요';
+  document.getElementById('breath-count').textContent = `0 / ${BREATH_TOTAL_CYCLES}회`;
+  const circle = document.getElementById('breath-circle');
+  circle.classList.remove('expand','contract');
+}
+
+/* =========================================================
+   휴식 타이머 (10분 = 600초)
+========================================================= */
+let restTimerInterval = null;
+let restSecondsLeft = 600;
+
+function startRest(){
+  restSecondsLeft = 600;
+  updateTimerDisplay();
+  goTo('screen-rest');
+  clearInterval(restTimerInterval);
+  restTimerInterval = setInterval(()=>{
+    restSecondsLeft--;
+    updateTimerDisplay();
+    if(restSecondsLeft <= 0){
+      clearInterval(restTimerInterval);
+      goToReassess();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(restSecondsLeft/60).toString().padStart(2,'0');
+  const s = (restSecondsLeft%60).toString().padStart(2,'0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+}
+
+function skipTimer(){
+  clearInterval(restTimerInterval);
+  goToReassess();
+}
+
+/* =========================================================
+   재평가 화면
+========================================================= */
+const REASSESS_QUESTIONS = [
+  { key:'headacheImproved', label:'두통이 줄었나요?', type:'good' },
+  { key:'dizzyImproved',    label:'어지럼증이 줄었나요?', type:'good' },
+  { key:'breathImproved',   label:'호흡이 편해졌나요?', type:'good' },
+  { key:'newChestOrRest',   label:'흉통 또는 안정 시 호흡곤란이 생겼나요?', type:'flag' },
+  { key:'newConfusionOrImbalance', label:'혼란 또는 균형 장애가 생겼나요?', type:'flag' },
+];
+
+function goToReassess(){
+  const wrap = document.getElementById('reassess-list');
+  wrap.innerHTML = '';
+  REASSESS_QUESTIONS.forEach(q=>{
+    wrap.innerHTML += `
+      <div class="symptom-item">
+        <div class="symptom-q"><div class="label">${q.label}</div></div>
+        <div class="yn-row" data-key="${q.key}">
+          <button type="button" class="btn btn-outline" onclick="setReassessAnswer('${q.key}', true, this)">예</button>
+          <button type="button" class="btn btn-secondary" onclick="setReassessAnswer('${q.key}', false, this)">아니오</button>
+        </div>
+      </div>
+    `;
+  });
+  state.reassessAnswers = {};
+  goTo('screen-reassess');
+}
+
+function setReassessAnswer(key, val, btnEl){
+  state.reassessAnswers[key] = val;
+  const row = btnEl.parentElement;
+  row.querySelectorAll('button').forEach(b=>b.classList.remove('btn-primary'));
+  row.querySelectorAll('button').forEach(b=>{
+    b.classList.remove('btn-primary');
+  });
+  btnEl.classList.add('btn-primary');
+}
+
+/* =========================================================
+   재평가 결과 판정
+   - '흉통/안정 시 호흡곤란' 또는 '혼란/균형장애'가 새로 나타났다면
+     증상 악화로 간주하여 위험 단계 경고 화면으로 이동한다.
+========================================================= */
+function submitReassess(){
+  const a = state.reassessAnswers || {};
+  const newDanger = a.newChestOrRest === true || a.newConfusionOrImbalance === true;
+
+  state.reassess = {
+    headacheImproved: a.headacheImproved === true,
+    dizzyImproved: a.dizzyImproved === true,
+    breathImproved: a.breathImproved === true,
+    newChestOrRest: a.newChestOrRest === true,
+    newConfusionOrImbalance: a.newConfusionOrImbalance === true,
+    newDangerDetected: newDanger,
+  };
+
+  if(newDanger){
+    const flags = [];
+    if(a.newChestOrRest) flags.push('흉통 또는 안정 시 호흡곤란 (재평가 중 새로 발생)');
+    if(a.newConfusionOrImbalance) flags.push('혼란 또는 균형 장애 (재평가 중 새로 발생)');
+    renderDangerScreen({ stage:'위험', flags });
+    goTo('screen-danger');
+  } else {
+    renderFinalScreen();
+    goTo('screen-final');
+  }
+}
+
+/* =========================================================
+   최종 비교 화면
+========================================================= */
+function renderFinalScreen(){
+  const r = state.reassess;
+  const improvedCount = [r.headacheImproved, r.dizzyImproved, r.breathImproved].filter(Boolean).length;
+
+  let finalStage, finalTitle, finalSub;
+  if(improvedCount >= 2){
+    finalStage = '관찰';
+    finalTitle = '전반적으로 호전되었습니다';
+    finalSub = '증상이 완화되는 추세입니다. 다만 컨디션이 다시 나빠지면 즉시 활동을 중단하고 도움을 요청하세요.';
+  } else if(improvedCount === 1){
+    finalStage = '주의';
+    finalTitle = '일부 증상만 호전되었습니다';
+    finalSub = '증상이 완전히 회복되지 않았습니다. 계속 휴식하고 상태를 주시하며, 필요하면 의료진에게 문의하세요.';
+  } else {
+    finalStage = '주의';
+    finalTitle = '증상 변화가 크지 않습니다';
+    finalSub = '증상이 뚜렷하게 개선되지 않았습니다. 계속 안정을 취하고, 악화될 경우 즉시 도움을 요청하세요.';
+  }
+
+  document.getElementById('final-badge').className = 'result-badge ' + STAGE_BADGE_CLASS[finalStage];
+  document.getElementById('final-badge').textContent = finalStage;
+  document.getElementById('final-title').textContent = finalTitle;
+  document.getElementById('final-sub').textContent = finalSub;
+
+  const rows = [
+    ['판정 단계', state.initial.stage, finalStage],
+    ['총점(참고용)', `${state.initial.total}점`, '-'],
+    ['두통', symptomScoreLabel('headache'), r.headacheImproved ? '<span class="tag-good">호전</span>' : '<span class="tag-neutral">변화 없음/악화</span>'],
+    ['어지럼증', symptomScoreLabel('dizziness'), r.dizzyImproved ? '<span class="tag-good">호전</span>' : '<span class="tag-neutral">변화 없음/악화</span>'],
+    ['호흡 곤란', symptomScoreLabel('dyspnea'), r.breathImproved ? '<span class="tag-good">호전</span>' : '<span class="tag-neutral">변화 없음/악화</span>'],
+    ['물 마시기', state.waterDone ? '완료' : '미완료', '-'],
+  ];
+
+  const body = document.getElementById('compare-body');
+  body.innerHTML = rows.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`).join('');
+}
+
+function symptomScoreLabel(key){
+  return `${state.symptoms[key]}점`;
+}
+
+/* =========================================================
+   전체 초기화 (처음 화면으로 되돌아갈 때 호출)
+========================================================= */
+function resetAll(){
+  SYMPTOM_DEFS.forEach(s => state.symptoms[s.key] = 0);
+  state.hasFrothySputum = false;
+  state.altitude = '';
+  state.activity = '';
+  state.spo2 = null;
+  state.hr = null;
+  state.waterDone = false;
+  state.initial = null;
+  state.reassess = null;
+  state.reassessAnswers = {};
+
+  document.getElementById('input-spo2').value = '';
+  document.getElementById('input-hr').value = '';
+  renderSymptomList();
+  stopBreathing();
+  clearInterval(restTimerInterval);
+}
+
+/* =========================================================
+   서비스 워커 등록 (PWA 오프라인 지원 + 홈 화면 설치 활성화)
+   - HTTPS 또는 localhost 환경에서만 정상 동작한다.
+========================================================= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(err => console.log('서비스 워커 등록 실패:', err));
+  });
+}
+
+/* 홈 화면 추가(설치) 유도 배너: Android/Chrome의 beforeinstallprompt 이벤트 활용 */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('btn-install');
+  if(btn) btn.style.display = 'block';
+});
+
+function installApp(){
+  const btn = document.getElementById('btn-install');
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(() => {
+    deferredInstallPrompt = null;
+    if(btn) btn.style.display = 'none';
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('btn-install');
+  if(btn) btn.style.display = 'none';
+});
+</script>
+</body>
+</html>

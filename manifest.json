@@ -1,0 +1,38 @@
+{
+  "name": "Hypoxia Guard - 저산소증 자가점검 및 대응 가이드",
+  "short_name": "Hypoxia Guard",
+  "description": "고산 환경이나 고강도 운동 상황에서 나타날 수 있는 저산소증 관련 증상을 스스로 점검하고 초기 대응 행동을 학습하는 교육용 프로토타입 앱",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F8FF",
+  "theme_color": "#1662FF",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
